@@ -21,8 +21,9 @@
                                     <option th:each="course : ${courses}"
                                             th:value="${course.id}"
                                             th:text="${course.name}">コース名</option>
-                                </select>
-                            </div>
+                                        </select>
+                                        <span th:if="${#fields.hasErrors('course')}" th:errors="*{course}" style="color: red;">Error</span>
+                                    </div>
                         </div>
                     </div>
                     <div class="mb-3">

@@ -9,7 +9,11 @@ import org.springframework.stereotype.Service;
 import com.example.slstudiomini.model.Course;
 import com.example.slstudiomini.repository.CourseRepository;
 
-import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Root;
 import jakarta.transaction.Transactional;
 
 @Service
@@ -18,13 +22,29 @@ public class CourseService {
     @Autowired
     private CourseRepository courseRepository;
 
+    @PersistenceContext
+    private EntityManager entityManager;
+
     public List<Course> findAllCourses() {
-        return courseRepository.findAll();
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Course> cq = cb.createQuery(Course.class);
+        Root<Course> course = cq.from(Course.class);
+
+        cq.select(course);
+        cq.where(cb.isNull(course.get("deletedAt")));
+        return entityManager.createQuery(cq).getResultList();
     }
 
     public Course findCourseById(Long id) {
-        return courseRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Course Not Found With id = " + id));
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Course> cq = cb.createQuery(Course.class);
+        Root<Course> course = cq.from(Course.class);
+
+        cq.select(course);
+        cq.where(
+            cb.equal(course.get("id"), id)
+        );
+        return entityManager.createQuery(cq).getSingleResult();
     }
 
     @Transactional

@@ -10,4 +10,7 @@ import com.example.slstudiomini.model.Authority;
 @Repository
 public interface AuthorityRepository extends JpaRepository<Authority, Long> {
     Optional<Authority> findByUserId(Long user_id);
+
+    //これを追加
+    Optional<Authority> findByAuthority(String authority);
 }

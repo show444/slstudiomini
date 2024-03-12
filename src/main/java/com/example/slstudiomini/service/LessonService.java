@@ -6,11 +6,17 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.example.slstudiomini.exception.MyLessonNotFoundException;
 import com.example.slstudiomini.model.Course;
 import com.example.slstudiomini.model.Lesson;
 import com.example.slstudiomini.repository.LessonRepository;
 
-import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.NoResultException;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Root;
 import jakarta.transaction.Transactional;
 
 @Service
@@ -22,13 +28,34 @@ public class LessonService {
     @Autowired
     private CourseService courseService;
 
+    @PersistenceContext
+    private EntityManager entityManager;
+
     public List<Lesson> findAllLessons() {
-        return lessonRepository.findAll();
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Lesson> cq = cb.createQuery(Lesson.class);
+        Root<Lesson> lesson = cq.from(Lesson.class);
+
+        cq.select(lesson);
+        cq.where(cb.isNull(lesson.get("deletedAt")));
+        return entityManager.createQuery(cq).getResultList();
     }
 
     public Lesson findLessonById(Long id) {
-        return lessonRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Lesson Not Found With id= " + id));
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Lesson> cq = cb.createQuery(Lesson.class);
+        Root<Lesson> lesson = cq.from(Lesson.class);
+
+        cq.select(lesson);
+        cq.where(
+            cb.equal(lesson.get("id"), id)
+        );
+
+        try{
+            return entityManager.createQuery(cq).getSingleResult();
+        }catch(NoResultException e){
+            throw new MyLessonNotFoundException("存在しないレッスンです。Lesson ID = " + id);
+        }
     }
 
     @Transactional
